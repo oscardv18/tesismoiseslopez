@@ -12,6 +12,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Set;
+
 
 class InventoryResource extends Resource
 {
@@ -30,12 +32,25 @@ class InventoryResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('material_id')
-                    ->relationship('material', 'name')
+                    ->relationship('material', 'name', function ($query) {
+                        // Filtrar materiales que no están en la tabla inventories
+                        $query->whereNotIn('id', function ($subquery) {
+                            $subquery->select('material_id')->from('inventories');
+                        });
+                    })
                     ->label('Material')
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function (Set $set, $state) {
+                        // Lógica para obtener la cantidad actual
+                        $material = \App\Models\Material::find($state);
+                        $set('current_quantity', $material ? $material->available_quantity : null);
+                    }),
+
                 Forms\Components\TextInput::make('current_quantity')
                     ->label('Cantidad Disponible')
                     ->required()
+                    ->readOnly()
                     ->numeric(),
                 Forms\Components\TextInput::make('min_quantity')
                     ->label('Cantidad mínima requerida')

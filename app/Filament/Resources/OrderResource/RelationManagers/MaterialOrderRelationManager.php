@@ -83,12 +83,7 @@ class MaterialOrderRelationManager extends RelationManager
                         $this->adjustMaterialQuantity($materialOrder, $materialOrder->quantity - $originalQuantity);
                     }
                 ),
-                Tables\Actions\DeleteAction::make()->after(
-                    function (MaterialOrder $materialOrder): void {
-                        // Al eliminar, suma la cantidad al inventario
-                        $this->adjustMaterialQuantity($materialOrder, $materialOrder->quantity);
-                    }
-                ),
+                Tables\Actions\DeleteAction::make()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
